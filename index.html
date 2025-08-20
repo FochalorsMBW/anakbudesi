@@ -61,6 +61,7 @@
         .opening-animation.hide {
             opacity: 0;
             visibility: hidden;
+            pointer-events: none;
         }
 
         .opening-stars {
@@ -97,7 +98,7 @@
             text-align: center;
             color: #fff;
             position: relative;
-            z-index: 2;
+            z-index: 2001;
             padding: 2rem;
             max-width: 800px;
             filter: drop-shadow(0 6px 30px rgba(0, 0, 0, .35));
@@ -126,6 +127,8 @@
             background: conic-gradient(from 180deg, rgba(255, 255, 255, .2), rgba(212, 175, 134, .35), rgba(255, 255, 255, .2));
             filter: blur(30px) saturate(1.1);
             animation: spin 16s linear infinite;
+            pointer-events: none;
+            z-index: 1;
         }
 
         @keyframes spin {
@@ -136,7 +139,18 @@
 
         .opening-cta {
             margin-top: 1.8rem;
+            pointer-events: auto;
         }
+
+        /* Ensure the primary open button and surprise button are always clickable above any layer */
+        #openNowBtn,
+        #surpriseButton {
+            position: relative;
+            z-index: 5000;
+            pointer-events: auto;
+        }
+
+        /* Opening CTA remains clickable; decorative layers already ignore pointer events */
 
         .btn-primary {
             background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 100%);
@@ -188,6 +202,7 @@
             font-size: 2rem;
             color: rgba(218, 165, 130, 0.22);
             z-index: 1;
+            pointer-events: none;
         }
 
         .ornament-1 {
@@ -384,6 +399,33 @@
             margin-bottom: 1.5rem;
         }
 
+        /* ===================== Slideshow ===================== */
+        .slideshow {
+            position: relative;
+            width: 100%;
+            max-width: 920px;
+            height: clamp(200px, 45vw, 420px);
+            margin: 0.6rem auto 1.2rem;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 28px rgba(90, 74, 58, .2);
+            background: rgba(0, 0, 0, .06);
+        }
+
+        .slideshow img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.2s ease;
+        }
+
+        .slideshow img.active {
+            opacity: 1;
+        }
+
 
         .surprise-button {
             background: linear-gradient(135deg, var(--gold-1) 0%, var(--gold-2) 100%);
@@ -530,10 +572,12 @@
             align-items: center;
             justify-content: center;
             z-index: 1200;
+            pointer-events: none;
         }
 
         .lightbox.show {
             display: flex;
+            pointer-events: auto;
         }
 
         .lightbox-content {
@@ -632,12 +676,14 @@
             z-index: 1100;
             opacity: 0;
             visibility: hidden;
+            pointer-events: none;
             transition: all .5s ease;
         }
 
         .modal-overlay.show {
             opacity: 1;
             visibility: visible;
+            pointer-events: auto;
         }
 
         .modal {
@@ -656,11 +702,13 @@
             box-shadow: 0 25px 60px rgba(90, 74, 58, .25);
             transition: all .55s cubic-bezier(.25, .46, .45, .94);
             border-radius: 16px;
+            pointer-events: none;
         }
 
         .modal.show {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
         }
 
         .modal-content {
@@ -1012,10 +1060,11 @@
         <div class="opening-stars" id="openingStars"></div>
         <div class="glow-ring"></div>
         <div class="opening-title">
-            <div class="line-1" id="openingText">Selamat Ulang Tahun</div>
-            <div class="line-2" id="openingSubtext">Sebuah kejutan spesial untukmu</div>
+            <div class="line-1" id="openingText">Happy Birthday!</div>
+            <div class="line-2" id="openingSubtext">Sebuah kejutan spesial untuk perempuan yang kucinta</div>
             <div class="opening-cta" style="display:grid; gap:.6rem; place-items:center;">
-                <button class="btn-primary" id="openNowBtn"><i class="fa-solid fa-sparkles"></i> Buka Kejutan</button>
+                <button class="btn-primary" id="openNowBtn" onclick="handleOpenNow()"><i
+                        class="fa-solid fa-sparkles"></i>Coba Klik</button>
                 <small style="opacity:.8">(Aktifkan suara untuk pengalaman terbaik)</small>
             </div>
         </div>
@@ -1036,9 +1085,14 @@
         <div class="decorative-line"></div>
         <p class="subtitle">Hari Istimewa</p>
         <h1 class="main-title">Selamat Ulang Tahun</h1>
-        <p class="title-accent">Sayangku</p>
+        <p class="title-accent">Kayla</p>
 
-        <button class="surprise-button" id="surpriseButton">Buka Kejutan Spesial</button>
+        <!-- SLIDESHOW FOTO KITA -->
+        <div class="slideshow" id="slideshow">
+            <!-- Tambahkan <img src="..." alt="..." /> di sini untuk pakai foto khusus slideshow -->
+        </div>
+
+        <button class="surprise-button" id="surpriseButton" onclick="openSurprise()">Surprise</button>
 
         <!-- COUNTDOWN -->
         <div class="countdown" id="countdown">
@@ -1063,27 +1117,28 @@
         <!-- GALERI -->
         <div class="gallery-container" id="galleryContainer">
             <!-- Ganti src dengan foto-foto kamu (link/URL atau path lokal) -->
-            <div class="gallery-item"><img
-                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzMzMyI+Rm90byAxPC90ZXh0Pjwvc3ZnPg=="
-                    alt="Foto Kenangan 1" /></div>
-            <div class="gallery-item"><img
-                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzMzMyI+Rm90byAyPC90ZXh0Pjwvc3ZnPg=="
-                    alt="Foto Kenangan 2" /></div>
-            <div class="gallery-item"><img
-                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzMzMyI+Rm90byAzPC90ZXh0Pjwvc3ZnPg=="
-                    alt="Foto Kenangan 3" /></div>
-            <div class="gallery-item"><img
-                    src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzMzMyI+Rm90byA0PC90ZXh0Pjwvc3ZnPg=="
-                    alt="Foto Kenangan 4" /></div>
+            <div class="gallery-item"><img src="foto/1.jpg" alt="Foto Kenangan 1" /></div>
+            <div class="gallery-item"><img src="foto/2.jpg" alt="Foto Kenangan 2" /></div>
+            <div class="gallery-item"><img src="foto/3.jpg" alt="Foto Kenangan 3" /></div>
+            <div class="gallery-item"><img src="foto/4.jpg" alt="Foto Kenangan 4" /></div>
         </div>
 
         <!-- KENANGAN -->
         <div class="memory-section" id="memorySection">
             <h3 class="memory-title">Kenangan Indah</h3>
-            <p class="memory-text">Aku masih ingat jelas pertama kali kita bertemu. Saat itu, senyummu langsung
-                membuatku terpesona. Sejak hari itu, setiap momen bersamamu adalah hadiah yang tak ternilai. Terima
-                kasih sudah mengisi hari-hariku dengan tawa dan kebahagiaan.</p>
-            <p class="memory-date">- 15 Februari 2023 -</p>
+            <p class="memory-text">Awalnya kukira kita ini hanya sebatas teman online yang sering bermain rosbloks
+                bareng lalu kembali menjadi asing karena waktu dan jarak, akan tetapi ternyata itu hanyalah asumsi
+                belaka ku. Namun kenyataannya pada titik ini kita telah melalui berbagai hal dengan menyenangkan hingga
+                kamu memberiku romansa yang membuatku terpesona juga membuatku merasa bahagia, dan sekarang kita telah
+                menjadi sepasang kekasih yang membuat dunia menyaksikan kita bagaikan pemeran utama pada kisah komedi
+                romantis.</p>
+            <br><br><br>
+            <p class="memory-text"> Terimakasih sudah menjadi bagian dari kisah hidupku, apa yang kamu lakukan sangat
+                berharga bagiku dan semua
+                itu
+                merupakan kenangan yang menyenangkan bagi hidupku, semoga kita selalu bersama seterusnya hingga akhirnya
+                kita saling bersandar dengan sukacita.
+            <p class="memory-date">- 9 July 2025 to This time -</p>
         </div>
     </div>
 
@@ -1097,7 +1152,7 @@
             <p class="modal-subtitle">Dengan Segenap Cinta</p>
 
             <div class="love-letter" id="loveLetter">
-                <p>Sayang,</p>
+                <p>Sayangku Kayla,</p>
                 <br />
                 <p>Di hari istimewa ini, izinkan aku mengungkapkan perasaan yang mengalir dari lubuk hati terdalam.
                     Kehadiranmu dalam hidupku bagaikan cahaya yang menerangi setiap sudut kegelapan, memberikan makna
@@ -1106,21 +1161,21 @@
                 <p>Semoga setiap keinginanmu dimudahkan, setiap langkahmu dilimpahi berkah, dan setiap mimpimu mendekat
                     nyata. Aku selalu di sini—menjadi rumah untukmu pulang, bahu untukmu bersandar, dan sahabat untukmu
                     bercerita.</p>
-                <div class="signature">— Aku</div>
+                <div class="signature">— Luthfi Al Hakim</div>
             </div>
 
             <!-- Pesan Personal Interaktif -->
             <div class="interactive-box">
                 <div class="input-row">
-                    <input id="nameInput" type="text" placeholder="Masukkan namamu (opsional)" />
+                    <input id="nameInput" type="text" placeholder="Masukkan namamu (opsional)" disabled />
                     <button class="btn-primary" id="applyNameBtn"><i class="fa-solid fa-wand-magic-sparkles"></i>
                         Personalize</button>
                 </div>
                 <div class="chip-row" aria-label="Pilih rasa pesan">
-                    <span class="chip" data-chip="romantis">Romantis 💝</span>
-                    <span class="chip" data-chip="kocak">Kocak 😆</span>
-                    <span class="chip" data-chip="penyemangat">Penyemangat ✨</span>
-                    <span class="chip" data-chip="puitis">Puitis 🌙</span>
+                    <span class="chip" data-chip="romantis">💝</span>
+                    <span class="chip" data-chip="kocak">😆</span>
+                    <span class="chip" data-chip="penyemangat">✨</span>
+                    <span class="chip" data-chip="puitis">🌙</span>
                 </div>
             </div>
 
@@ -1163,7 +1218,7 @@
     <!-- ===================== MUSIK ===================== -->
     <audio id="bgm" preload="auto" loop>
         <!-- Ganti src ini dengan lagu kesukaanmu (mp3/ogg) -->
-        <source src="" type="audio/mpeg" />
+        <source src="musik.mp3" type="audio/mpeg" />
     </audio>
     <div class="music-control">
         <button class="music-btn" id="toggleMusic" title="Putar/Jeda Musik"><i class="fa-solid fa-play"></i></button>
@@ -1178,9 +1233,19 @@
            KONFIGURASI YANG MUDAH DIEDIT
            =============================================================== */
         const CONFIG = {
-            countdownTarget: new Date('2025-09-10T00:00:00+07:00'), // Ubah tanggal acara spesial di sini (WIB)
+            countdownTarget: new Date('2025-08-21T00:00:00+07:00'), // Ubah tanggal acara spesial di sini (WIB)
             autoPlayMusicOnOpen: true, // saat membuka kejutan pertama kali
             gallerySelector: '#galleryContainer .gallery-item img',
+            // Atur URL musik default di sini (bisa file lokal atau URL langsung ke .mp3)
+            musicUrl: 'musik.mp3',
+            defaultName: 'Kayla',
+            slideshow: {
+                // Kosongkan array untuk otomatis menggunakan gambar dari galeri
+                images: [
+                    'foto/blox1.png', 'foto/blox2.png', 'foto/blox3.png', 'foto/blox4.png', 'foto/blox5.png', 'foto/blox6.png'
+                ],
+                intervalMs: 4000
+            }
         };
 
         /* ===============================================================
@@ -1200,7 +1265,7 @@
             openingStars.appendChild(s);
         }
 
-        openNowBtn.addEventListener('click', () => {
+        function handleOpenNow() {
             opening.classList.add('hide');
             // Tampilkan header bertahap
             requestAnimationFrame(() => {
@@ -1212,7 +1277,8 @@
             });
             if (CONFIG.autoPlayMusicOnOpen) safePlayMusic();
             burstConfetti(180);
-        });
+        }
+        openNowBtn.addEventListener('click', handleOpenNow);
         opening.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'opacity' && opening.classList.contains('hide')) {
                 opening.style.display = 'none';
@@ -1253,7 +1319,8 @@
         function showModal() { overlay.classList.add('show'); modal.classList.add('show'); setTimeout(() => cakeContainer.classList.add('show'), 300); }
         function closeModal() { overlay.classList.remove('show'); modal.classList.remove('show'); }
 
-        surpriseButton.addEventListener('click', () => { showModal(); burstConfetti(220); });
+        function openSurprise() { showModal(); burstConfetti(220); }
+        surpriseButton.addEventListener('click', openSurprise);
         document.getElementById('closeModalBtn').addEventListener('click', closeModal);
         overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -1317,11 +1384,22 @@
         const toggleMusic = document.getElementById('toggleMusic');
         const volumeRange = document.getElementById('volumeRange');
 
+        // Siapkan sumber musik jika kosong
+        if (!bgm.querySelector('source')?.src) {
+            const src = document.createElement('source');
+            src.src = CONFIG.musicUrl;
+            src.type = 'audio/mpeg';
+            bgm.appendChild(src);
+        }
+
         function safePlayMusic() {
             bgm.volume = +volumeRange.value;
             const playPromise = bgm.play();
             if (playPromise !== undefined) {
-                playPromise.then(() => updateMusicIcon()).catch(() => {/* autoplay mungkin diblokir */ });
+                playPromise.then(() => updateMusicIcon()).catch(() => {
+                    // Autoplay mungkin diblokir, diam saja sampai user klik tombol
+                    updateMusicIcon();
+                });
             }
         }
 
@@ -1331,10 +1409,20 @@
         }
 
         toggleMusic.addEventListener('click', async () => {
-            if (bgm.paused) { await bgm.play(); } else { bgm.pause(); }
-            updateMusicIcon();
+            try {
+                if (bgm.paused) { await bgm.play(); } else { bgm.pause(); }
+            } finally { updateMusicIcon(); }
         });
         volumeRange.addEventListener('input', () => { bgm.volume = +volumeRange.value; });
+
+        // Sinkronkan ikon saat metadata terload atau status berubah
+        bgm.addEventListener('play', updateMusicIcon);
+        bgm.addEventListener('pause', updateMusicIcon);
+        bgm.addEventListener('loadedmetadata', () => {
+            if (!Number.isFinite(bgm.duration)) return;
+            bgm.volume = +volumeRange.value;
+            updateMusicIcon();
+        });
 
         /* ===============================================================
            PESAN PERSONAL INTERAKTIF
@@ -1344,16 +1432,16 @@
         const loveLetter = document.getElementById('loveLetter');
 
         const templates = {
-            romantis: (name) => `Sayang ${name || 'kamu'},\n\nSetiap hembus napas menyebut namamu. Di antara riuh dunia, kamu tetap jadi tenangku. Terima kasih sudah hadir; tetaplah di sini, biar aku yang menjaga bahagiamu.`,
-            kocak: (name) => `${name || 'Kamu'} itu ibarat Wi‑Fi—kalau jauh, sinyal hati langsung nge‑drop. Selamat ulang tahun! Semoga bahagiamu unlimited, tanpa FUP ya 😀`,
-            penyemangat: (name) => `Hei ${name || 'kamu'}!\n\nKamu kuat, hebat, dan pantas dapat yang terbaik. Tahun ini: mimpimu bukan cuma wacana—kita wujudkan bareng‑bareng!`,
-            puitis: (name) => `${name || 'Kau'},\n\nPada malam yang diam, doaku menemuimu. Semoga bintang mengajarkan kita cara tetap berpendar, bahkan saat gelap datang.`,
+            romantis: (name) => `Sayang ${name || CONFIG.defaultName || 'kamu'},\n\nSetiap hembus napas menyebut namamu. Di antara riuh dunia, kamu tetap jadi tenangku. Terima kasih sudah hadir; tetaplah di sini, biar aku yang menjaga bahagiamu.`,
+            kocak: (name) => `${name || CONFIG.defaultName || 'Kamu'} itu ibarat Wi‑Fi—kalau jauh, sinyal hati langsung nge‑drop. Selamat ulang tahun! Semoga bahagiamu unlimited, tanpa FUP ya bjir aowkaokawk`,
+            penyemangat: (name) => `Hei ${name || CONFIG.defaultName || 'kamu'}!\n\nKamu kuat, hebat, dan pantas dapat yang terbaik. Kamu bilang ke aku kalau kamu bakalan jadi guru yang bermanfaat bagi generasi muda semoga apa yang kamu inginkan tercapai dengan usaha dan tekad yang kuat. Mimpimu bukan cuma wacana— ayo kita wujudkan bareng‑bareng!`,
+            puitis: (name) => `${name || CONFIG.defaultName || 'Kau'},\n\nPada malam yang diam dan sunyi, doaku menyertaimu. Semoga bintang mengajarkan kita cara tetap berpendar, bahkan saat gelap datang.`,
         };
 
         function setLetter(text) {
             // efek typewriter ringan
             loveLetter.style.opacity = 0.6;
-            const base = `\n<div class="signature">— Aku</div>`;
+            const base = `\n<div class="signature">— Luthfi Al Hakim</div>`;
             const lines = text.split('');
             loveLetter.innerHTML = '<p style="white-space:pre-line"></p>' + base;
             const p = loveLetter.querySelector('p');
@@ -1373,8 +1461,7 @@
         });
 
         applyNameBtn.addEventListener('click', () => {
-            const name = nameInput.value.trim();
-            if (!name) { setLetter('Halo kamu yang istimewa. Nama boleh kosong, tapi sayangku tak pernah kosong.'); return; }
+            const name = nameInput.value.trim() || CONFIG.defaultName;
             setLetter(`Hai ${name},\n\nTerima kasih sudah lahir dan bertumbuh jadi sosok yang begitu berarti. Semoga hari ini membawamu pada versi terbaik dirimu.`);
             burstConfetti(60);
         });
@@ -1458,11 +1545,54 @@
            MASUKKAN KONTEN DINAMIS PADA LOAD
            =============================================================== */
         window.addEventListener('load', () => {
+            // Prefill default name
+            if (nameInput && !nameInput.value) nameInput.value = CONFIG.defaultName || '';
             // reveal header secara halus jika user skip opening (jaga-jaga)
             setTimeout(() => document.getElementById('headerSection').classList.add('visible'), 1500);
         });
+
+        /* ===============================================================
+           SLIDESHOW: pakai daftar gambar khusus atau fallback ke galeri
+           =============================================================== */
+        (function initSlideshow() {
+            const wrap = document.getElementById('slideshow');
+            if (!wrap) return;
+
+            // Ambil sumber gambar: dari CONFIG.slideshow.images atau dari galeri jika kosong
+            const sources = (CONFIG.slideshow?.images && CONFIG.slideshow.images.length > 0)
+                ? CONFIG.slideshow.images.slice()
+                : Array.from(document.querySelectorAll(CONFIG.gallerySelector)).map(img => img.src);
+
+            // Jika masih kosong, tidak perlu inisialisasi
+            if (!sources || sources.length === 0) return;
+
+            // Jika user sudah menaruh <img> manual di dalam #slideshow, pakai itu
+            let imgs = Array.from(wrap.querySelectorAll('img'));
+            if (imgs.length === 0) {
+                // Buat <img> dari sumber
+                imgs = sources.map((src, i) => {
+                    const im = document.createElement('img');
+                    im.src = src;
+                    im.alt = 'Foto kita ' + (i + 1);
+                    if (i === 0) im.classList.add('active');
+                    wrap.appendChild(im);
+                    return im;
+                });
+            } else {
+                // Pastikan hanya satu yang aktif saat awal
+                imgs.forEach((im, i) => { if (i === 0) im.classList.add('active'); else im.classList.remove('active'); });
+            }
+
+            let idx = 0;
+            setInterval(() => {
+                const current = imgs[idx];
+                idx = (idx + 1) % imgs.length;
+                const next = imgs[idx];
+                if (current) current.classList.remove('active');
+                if (next) next.classList.add('active');
+            }, (CONFIG.slideshow?.intervalMs || 4000));
+        })();
     </script>
 </body>
 
 </html>
-
